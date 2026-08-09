@@ -11,6 +11,7 @@ function LoginContent() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'user' | 'help_team'>('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(searchParams.get('error'));
   const [message, setMessage] = useState<string | null>(searchParams.get('message'));
@@ -32,6 +33,7 @@ function LoginContent() {
             data: {
               full_name: fullName,
               name: fullName,
+              role: role,
             },
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
@@ -39,12 +41,80 @@ function LoginContent() {
         if (signUpError) throw signUpError;
         setMessage('Check your email for the confirmation link.');
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        let authData;
+        let signInError;
+        try {
+          const res = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          authData = res.data;
+          signInError = res.error;
+        } catch (err) {
+          signInError = err;
+        }
+
+        // Auto-create Admin user if it doesn't exist in Supabase yet
+        if (signInError && email === 'admin2008@gmail.com' && password === 'admin2008') {
+          try {
+            // Sign up
+            const { error: signUpError } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                data: {
+                  full_name: 'Administrator',
+                  role: 'admin',
+                }
+              }
+            });
+            if (!signUpError) {
+              // Sign in again on success
+              const res = await supabase.auth.signInWithPassword({
+                email,
+                password,
+              });
+              authData = res.data;
+              signInError = res.error;
+            }
+          } catch (signUpErr) {
+            // Ignore sign up error and show original sign in error
+          }
+        }
+
         if (signInError) throw signInError;
-        router.push('/home');
+
+        if (authData?.user) {
+          const user = authData.user;
+          // If the email is the admin email, make sure they have the admin role in the profiles table
+          if (user.email === 'admin2008@gmail.com') {
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              email: user.email,
+              role: 'admin',
+              full_name: 'Administrator'
+            });
+            router.push('/admin');
+            return;
+          }
+
+          // Fetch user's role from profiles table to decide redirect
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+          if (profile?.role === 'admin') {
+            router.push('/admin');
+          } else if (profile?.role === 'help_team') {
+            router.push('/help-team');
+          } else {
+            router.push('/home');
+          }
+        } else {
+          router.push('/home');
+        }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An error occurred during authentication.';
@@ -58,6 +128,10 @@ function LoginContent() {
     setLoading(true);
     setError(null);
     try {
+      // Store selected role for Google OAuth (will be read by auth callback)
+      if (mode === 'signup') {
+        localStorage.setItem('signup_role', role);
+      }
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -221,7 +295,7 @@ function LoginContent() {
             ) : mode === 'login' ? (
               'Sign In'
             ) : (
-              'Create Account'
+              `Create ${role === 'help_team' ? 'Help Team' : 'User'} Account`
             )}
           </button>
         </form>
@@ -262,13 +336,41 @@ function LoginContent() {
           <span>Continue with Google</span>
         </button>
 
-
-
-        {/* Footer info */}
-        <div className="mt-8 text-center space-y-2">
-          <p className="text-xs text-white/40">
-            Report emergencies · Save lives · Stay safe
+        {/* Bottom selector section */}
+        <div className="mt-8 pt-6 border-t border-white/5 text-center space-y-4">
+          <p className="text-[10px] uppercase tracking-wider text-white/30 font-bold">
+            Create an Account
           </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('signup');
+                setRole('user');
+              }}
+              className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signup' && role === 'user'
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-extrabold shadow'
+                  : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              👤 Register User
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('signup');
+                setRole('help_team');
+              }}
+              className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signup' && role === 'help_team'
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-400 font-extrabold shadow'
+                  : 'border-white/5 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              🛡️ Register Help Team
+            </button>
+          </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] text-white/40">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>Secured with Supabase</span>

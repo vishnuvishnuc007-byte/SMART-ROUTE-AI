@@ -46,6 +46,7 @@ export default function HomePage() {
   const [alternativeRouteInfo, setAlternativeRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
   const [routeInfoOverride, setRouteInfoOverride] = useState<{ distance: string; duration: string } | null>(null);
   const [customReportCoords, setCustomReportCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickToMode, setPickToMode] = useState(false);
 
 
 
@@ -59,7 +60,18 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
       const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      if (data) setUserProfile({ role: data.role, id: user.id });
+      if (data) {
+        // Check if Google OAuth signup had a role selection stored in localStorage
+        const pendingRole = localStorage.getItem('signup_role');
+        if (pendingRole && (pendingRole === 'user' || pendingRole === 'help_team') && data.role === 'user' && pendingRole !== 'user') {
+          await supabase.from('profiles').update({ role: pendingRole }).eq('id', user.id);
+          localStorage.removeItem('signup_role');
+          setUserProfile({ role: pendingRole, id: user.id });
+        } else {
+          localStorage.removeItem('signup_role');
+          setUserProfile({ role: data.role, id: user.id });
+        }
+      }
     };
     getProfile();
   }, [router]);
@@ -296,12 +308,10 @@ export default function HomePage() {
             const fullAccident = verifiedAccidents.find(a => a.id === acc.id);
             if (fullAccident) setSelectedAccident(fullAccident);
           }}
-          onSetFrom={handleSetFromMap}
-          onSetTo={handleSetToMap}
-          onMarkDisaster={(lat, lng) => {
-            setCustomReportCoords({ lat, lng });
-            setReportType('disaster');
-          }}
+          onMapClick={pickToMode ? (lat, lng) => {
+            handleSetToMap(lat, lng);
+            setPickToMode(false);
+          } : undefined}
           fromCoords={fromCoords}
           toCoords={toCoords}
           alternativeRoute={alternativeRoute}
@@ -343,7 +353,18 @@ export default function HomePage() {
 
         onPreferSafeRoute={handlePreferSafeRoute}
         routeInfoOverrideProp={routeInfoOverride}
+        pickToMode={pickToMode}
+        onTogglePickTo={() => setPickToMode(prev => !prev)}
       />
+
+      {/* Pick To Mode Banner */}
+      {pickToMode && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1100] glass-strong px-5 py-2.5 flex items-center gap-3 animate-slide-up">
+          <div className="h-2.5 w-2.5 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-xs font-semibold text-white">Click anywhere on the map to set destination</span>
+          <button onClick={() => setPickToMode(false)} className="ml-2 text-[10px] text-white/40 hover:text-white/70 transition">✕</button>
+        </div>
+      )}
 
       {/* GPS loading */}
       {geoLoading && (

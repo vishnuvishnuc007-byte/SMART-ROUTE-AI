@@ -23,9 +23,7 @@ interface LeafletMapProps {
   ambulanceLocation: { lat: number; lng: number } | null;
   activeRoute: Array<{ lat: number; lng: number }> | null;
   onAccidentClick?: (accident: any) => void;
-  onSetFrom?: (lat: number, lng: number) => void;
-  onSetTo?: (lat: number, lng: number) => void;
-  onMarkDisaster?: (lat: number, lng: number) => void;
+  onMapClick?: (lat: number, lng: number) => void;
   fromCoords?: { lat: number; lng: number } | null;
   toCoords?: { lat: number; lng: number } | null;
   alternativeRoute?: Array<{ lat: number; lng: number }> | null;
@@ -41,9 +39,7 @@ export default function LeafletMap({
   ambulanceLocation,
   activeRoute,
   onAccidentClick,
-  onSetFrom,
-  onSetTo,
-  onMarkDisaster,
+  onMapClick,
   fromCoords,
   toCoords,
   alternativeRoute
@@ -63,11 +59,10 @@ export default function LeafletMap({
   const activeRoutePolylinesRef = useRef<L.Polyline[]>([]);
   const alternativeRoutePolylineRef = useRef<L.Polyline | null>(null);
 
-  // Save callbacks to ref to avoid re-triggering map click initialization
-  const callbacksRef = useRef({ onSetFrom, onSetTo, onMarkDisaster });
+  const callbacksRef = useRef({ onMapClick });
   useEffect(() => {
-    callbacksRef.current = { onSetFrom, onSetTo, onMarkDisaster };
-  }, [onSetFrom, onSetTo, onMarkDisaster]);
+    callbacksRef.current = { onMapClick };
+  }, [onMapClick]);
 
   const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371000;
@@ -173,38 +168,12 @@ export default function LeafletMap({
       maxZoom: 20,
     }).addTo(map);
 
-    // Map Click Listener
+    // Map Click Listener - only active in pick mode
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
-      
-      const container = L.DomUtil.create('div', 'map-click-menu');
-      container.innerHTML = `
-        <div class="flex flex-col gap-1.5 p-1 min-w-[130px]">
-          <button id="btn-set-from" class="w-full text-left bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded transition shadow-sm cursor-pointer">🟢 Set as FROM</button>
-          <button id="btn-set-to" class="w-full text-left bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded transition shadow-sm cursor-pointer">🔴 Set as TO</button>
-          <button id="btn-mark-disaster" class="w-full text-left bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded transition shadow-sm cursor-pointer font-semibold">⚠️ Mark Disaster Here</button>
-        </div>
-      `;
-
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(container)
-        .openOn(map);
-
-      setTimeout(() => {
-        document.getElementById('btn-set-from')?.addEventListener('click', () => {
-          if (callbacksRef.current.onSetFrom) callbacksRef.current.onSetFrom(lat, lng);
-          map.closePopup();
-        });
-        document.getElementById('btn-set-to')?.addEventListener('click', () => {
-          if (callbacksRef.current.onSetTo) callbacksRef.current.onSetTo(lat, lng);
-          map.closePopup();
-        });
-        document.getElementById('btn-mark-disaster')?.addEventListener('click', () => {
-          if (callbacksRef.current.onMarkDisaster) callbacksRef.current.onMarkDisaster(lat, lng);
-          map.closePopup();
-        });
-      }, 50);
+      if (callbacksRef.current.onMapClick) {
+        callbacksRef.current.onMapClick(lat, lng);
+      }
     });
 
     return () => {

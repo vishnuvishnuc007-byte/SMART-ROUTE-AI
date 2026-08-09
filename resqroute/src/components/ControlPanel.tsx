@@ -21,9 +21,10 @@ interface ControlPanelProps {
   onDestinationChange?: (val: string) => void;
   onOriginCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
   onDestCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
-
   onPreferSafeRoute?: () => void;
   routeInfoOverrideProp?: { distance: string; duration: string } | null;
+  pickToMode?: boolean;
+  onTogglePickTo?: () => void;
 }
 
 export function ControlPanel({
@@ -47,7 +48,9 @@ export function ControlPanel({
   onDestCoordsChange,
 
   onPreferSafeRoute,
-  routeInfoOverrideProp = null
+  routeInfoOverrideProp = null,
+  pickToMode = false,
+  onTogglePickTo
 }: ControlPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [origin, setOrigin] = useState(originProp);
@@ -431,9 +434,12 @@ export function ControlPanel({
                 if (onDestCoordsChange) onDestCoordsChange(null);
               }} 
               placeholder="To — click map or type"
-              className="w-full rounded-xl border border-white/10 bg-white/5 pl-8 pr-4 py-2.5 text-xs text-white placeholder-white/20 outline-none focus:border-info/30 transition-all"
+              className={`w-full rounded-xl border ${pickToMode ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/10 bg-white/5'} pl-8 pr-10 py-2.5 text-xs text-white placeholder-white/20 outline-none focus:border-info/30 transition-all`}
               onKeyDown={e => { if (e.key === 'Enter') searchRoute(); }} 
             />
+            <button onClick={onTogglePickTo} title={pickToMode ? 'Cancel map pick' : 'Pick destination on map'} className={`absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-7 w-7 rounded-lg transition ${pickToMode ? 'bg-blue-500/25 text-blue-400 ring-1 ring-blue-500/40 animate-pulse' : 'bg-white/5 text-white/30 hover:bg-white/10 hover:text-white/60'}`}>
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+            </button>
 
             {/* Destination Suggestions */}
             {showDestDropdown && destSuggestions.length > 0 && (

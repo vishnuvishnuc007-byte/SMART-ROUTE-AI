@@ -33,12 +33,13 @@ export async function GET(request: Request) {
         const { data: existing } = await supabase
           .from('profiles').select('id').eq('id', user.id).single();
         if (!existing) {
+          const isAdmin = user.email === 'admin2008@gmail.com';
           await supabase.from('profiles').insert({
             id: user.id,
             email: user.email,
-            full_name: user.user_metadata.full_name || user.user_metadata.name || '',
+            full_name: isAdmin ? 'Administrator' : (user.user_metadata.full_name || user.user_metadata.name || ''),
             avatar_url: user.user_metadata.avatar_url || '',
-            role: 'user',
+            role: isAdmin ? 'admin' : (user.user_metadata.role || 'user'),
           });
         }
       }
