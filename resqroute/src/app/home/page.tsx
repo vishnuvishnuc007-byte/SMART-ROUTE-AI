@@ -47,13 +47,9 @@ export default function HomePage() {
   const [routeInfoOverride, setRouteInfoOverride] = useState<{ distance: string; duration: string } | null>(null);
   const [customReportCoords, setCustomReportCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Hackathon demo test disaster state
-  const [demoDisaster, setDemoDisaster] = useState<{ id: string; center: { lat: number; lng: number }; radius: number; label: string } | null>(null);
-  const [mapCenterState, setMapCenterState] = useState<{ lat: number; lng: number } | null>(null);
 
-  const mapCenter = mapCenterState 
-    ? mapCenterState 
-    : latitude && longitude
+
+  const mapCenter = latitude && longitude
       ? { lat: latitude, lng: longitude }
       : { lat: 20.5937, lng: 78.9629 };
 
@@ -119,9 +115,7 @@ export default function HomePage() {
       };
     });
 
-  if (demoDisaster) {
-    localDangerZones.push(demoDisaster);
-  }
+
 
   // Calculate detour and blockages
   const checkRouteBlockage = useCallback((routePath: Array<{ lat: number; lng: number }>) => {
@@ -260,24 +254,7 @@ export default function HomePage() {
     }
   };
 
-  const handleTestScenario = () => {
-    // Put a demo disaster in Madurai city center
-    setDemoDisaster({
-      id: 'demo-disaster-id',
-      center: { lat: 9.9252, lng: 78.1198 },
-      radius: 600,
-      label: 'Flood - Blocked'
-    });
-    setMapCenterState({ lat: 9.9252, lng: 78.1198 });
-    
-    // Set a From and To route that cuts right through it!
-    setFromText('Demo Origin (North Madurai)');
-    setFromCoords({ lat: 9.9400, lng: 78.1198 });
-    
-    setToText('Demo Destination (South Madurai)');
-    setToCoords({ lat: 9.9100, lng: 78.1198 });
-    setRouteInfoOverride(null);
-  };
+
 
   const handleSignOut = useCallback(async () => {
     const supabase = createClient();
@@ -363,7 +340,7 @@ export default function HomePage() {
         onDestinationChange={setToText}
         onOriginCoordsChange={setFromCoords}
         onDestCoordsChange={setToCoords}
-        onTestScenario={handleTestScenario}
+
         onPreferSafeRoute={handlePreferSafeRoute}
         routeInfoOverrideProp={routeInfoOverride}
       />

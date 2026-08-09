@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface ControlPanelProps {
   userLat: number | null;
@@ -21,7 +21,7 @@ interface ControlPanelProps {
   onDestinationChange?: (val: string) => void;
   onOriginCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
   onDestCoordsChange?: (coords: { lat: number; lng: number } | null) => void;
-  onTestScenario?: () => void;
+
   onPreferSafeRoute?: () => void;
   routeInfoOverrideProp?: { distance: string; duration: string } | null;
 }
@@ -45,7 +45,7 @@ export function ControlPanel({
   onDestinationChange,
   onOriginCoordsChange,
   onDestCoordsChange,
-  onTestScenario,
+
   onPreferSafeRoute,
   routeInfoOverrideProp = null
 }: ControlPanelProps) {
@@ -55,6 +55,7 @@ export function ControlPanel({
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [routeBlocked, setRouteBlocked] = useState(false);
 
   // Custom Suggestion States
@@ -291,9 +292,30 @@ export function ControlPanel({
   };
 
   const fillGPS = () => {
+    // First try using already-available location from useGeolocation hook
     if (userLat && userLng) {
+      setGpsLoading(true);
       reverseGeocode(userLat, userLng);
+      setGpsLoading(false);
+      return;
     }
+    // Fallback: request fresh location from device
+    if (!navigator.geolocation) {
+      setRouteError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        setGpsLoading(false);
+      },
+      () => {
+        setRouteError('Location access denied. Please allow location permission.');
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const selectOrigin = (s: any) => {
@@ -355,7 +377,9 @@ export function ControlPanel({
               placeholder="From — click map or type"
               className="w-full rounded-xl border border-white/10 bg-white/5 pl-8 pr-14 py-2.5 text-xs text-white placeholder-white/20 outline-none focus:border-white/20 transition-all" 
             />
-            <button onClick={fillGPS} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-safe/10 px-2 py-1 text-[9px] font-bold text-green-400 hover:bg-safe/20 transition">📍GPS</button>
+            <button onClick={fillGPS} disabled={gpsLoading} title="Use current location" className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-7 w-7 rounded-lg bg-safe/10 text-green-400 hover:bg-safe/20 transition disabled:opacity-50">
+              {gpsLoading ? <div className="h-3 w-3 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" /> : <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>}
+            </button>
             
             {/* Origin Suggestions */}
             {showOriginDropdown && originSuggestions.length > 0 && (
@@ -438,11 +462,7 @@ export function ControlPanel({
           {(routeInfo || origin || destination) && <button onClick={clearRoute} className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-white/40 hover:text-white/60 transition">Clear</button>}
         </div>
 
-        {onTestScenario && (
-          <button onClick={onTestScenario} className="w-full mt-2 rounded-xl bg-amber-500/10 border border-amber-500/20 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/20 transition-all flex items-center justify-center gap-1.5">
-            ⚡ Run Demo Test Scenario
-          </button>
-        )}
+
 
         {routeError && <p className="mt-1.5 text-[10px] text-red-400">{routeError}</p>}
 
