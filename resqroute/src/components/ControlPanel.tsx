@@ -540,48 +540,46 @@ export function ControlPanel({
         </div>
       </div>
 
-      {/* Mobile: Minimized collapsed trigger bar */}
-      <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1000]">
+      {/* Mobile: Right-side vertically centered minimized trigger */}
+      <div className="lg:hidden fixed right-4 top-1/2 -translate-y-1/2 z-[1000] pointer-events-none">
         {!expanded && (
-          <div className="glass-strong px-4 py-3 mx-3 mb-3 flex items-center justify-between"
+          <div className="glass-strong p-3 flex flex-col items-center gap-3 shadow-2xl pointer-events-auto border border-white/10 cursor-pointer"
             onClick={() => setExpanded(true)}>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🚨</span>
-              <span className="text-xs font-bold text-white">SMART ROUTE AI</span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xl">🚨</span>
+              <span className="text-[9px] font-bold text-white/80 tracking-wider whitespace-nowrap [writing-mode:vertical-lr] rotate-180">SMART ROUTE</span>
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="h-px w-6 bg-white/15" />
+            
+            <div className="flex flex-col gap-2">
               <button onClick={(e) => { e.stopPropagation(); onDisaster(); }}
-                className="rounded-lg bg-danger/15 px-3 py-1.5 text-[10px] font-bold text-red-400">🔥 Disaster</button>
+                title="Disaster"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-danger/15 text-lg hover:bg-danger/25 active:scale-95 transition-all">
+                🔥
+              </button>
               <button onClick={(e) => { e.stopPropagation(); onAccident(); }}
-                className="rounded-lg bg-warning/15 px-3 py-1.5 text-[10px] font-bold text-amber-400">🚗 Accident</button>
-              <div className="h-1 w-8 rounded-full bg-white/20" />
+                title="Accident"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/15 text-lg hover:bg-warning/25 active:scale-95 transition-all">
+                🚗
+              </button>
             </div>
+
+            <div className="h-1 w-6 rounded-full bg-white/20" />
           </div>
         )}
       </div>
 
-      {/* Mobile: Drawer (Right-side slide-in panel) */}
-      <div className={`lg:hidden fixed inset-0 z-[1000] pointer-events-none`}>
-        {/* Backdrop */}
-        <div 
-          onClick={() => setExpanded(false)} 
-          className={`absolute inset-0 bg-black/60 pointer-events-auto transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        />
-        
-        {/* Drawer Panel */}
-        <div className={`absolute top-0 right-0 h-screen w-[85%] max-w-md glass-strong p-5 overflow-y-auto pointer-events-auto shadow-2xl transition-transform duration-300 ease-in-out transform ${expanded ? 'translate-x-0' : 'translate-x-full'}`}>
-          {/* Close (X) button at top-right */}
-          <div className="flex justify-end mb-2">
-            <button 
-              onClick={() => setExpanded(false)} 
-              className="text-white/60 hover:text-white p-1 text-lg font-bold transition-colors"
-              aria-label="Close panel"
-            >
-              ✕
-            </button>
+      {/* Mobile: Bottom sheet */}
+      <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1000]">
+        {expanded && (
+          <div className="glass-strong max-h-[80vh] overflow-y-auto p-5 mx-2 mb-2 animate-slide-up">
+            <div className="flex justify-center mb-3">
+              <button onClick={() => setExpanded(false)} className="h-1 w-10 rounded-full bg-white/20" />
+            </div>
+            {panelContent}
           </div>
-          {panelContent}
-        </div>
+        )}
       </div>
     </>
   );

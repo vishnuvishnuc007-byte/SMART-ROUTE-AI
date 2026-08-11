@@ -89,8 +89,8 @@ export function ReportModal({ type, latitude, longitude, onClose }: ReportModalP
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex justify-end sm:items-center sm:justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
-      <div className="glass-strong h-screen sm:h-auto w-[85%] sm:w-full max-w-md p-6 overflow-y-auto sm:overflow-visible animate-slide-in-right sm:animate-slide-up rounded-l-3xl rounded-r-none sm:rounded-3xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="glass-strong w-full max-w-md p-6 animate-slide-up" onClick={e => e.stopPropagation()}>
         {success ? (
           <div className="text-center py-8">
             <div className="text-5xl mb-3">✅</div>
