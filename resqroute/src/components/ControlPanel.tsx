@@ -540,7 +540,7 @@ export function ControlPanel({
         </div>
       </div>
 
-      {/* Mobile: Bottom sheet */}
+      {/* Mobile: Minimized collapsed trigger bar */}
       <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1000]">
         {!expanded && (
           <div className="glass-strong px-4 py-3 mx-3 mb-3 flex items-center justify-between"
@@ -558,15 +558,30 @@ export function ControlPanel({
             </div>
           </div>
         )}
+      </div>
 
-        {expanded && (
-          <div className="glass-strong max-h-[80vh] overflow-y-auto p-5 mx-2 mb-2 animate-slide-up">
-            <div className="flex justify-center mb-3">
-              <button onClick={() => setExpanded(false)} className="h-1 w-10 rounded-full bg-white/20" />
-            </div>
-            {panelContent}
+      {/* Mobile: Drawer (Right-side slide-in panel) */}
+      <div className={`lg:hidden fixed inset-0 z-[1000] pointer-events-none`}>
+        {/* Backdrop */}
+        <div 
+          onClick={() => setExpanded(false)} 
+          className={`absolute inset-0 bg-black/60 pointer-events-auto transition-opacity duration-300 ${expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        />
+        
+        {/* Drawer Panel */}
+        <div className={`absolute top-0 right-0 h-screen w-[85%] max-w-md glass-strong p-5 overflow-y-auto pointer-events-auto shadow-2xl transition-transform duration-300 ease-in-out transform ${expanded ? 'translate-x-0' : 'translate-x-full'}`}>
+          {/* Close (X) button at top-right */}
+          <div className="flex justify-end mb-2">
+            <button 
+              onClick={() => setExpanded(false)} 
+              className="text-white/60 hover:text-white p-1 text-lg font-bold transition-colors"
+              aria-label="Close panel"
+            >
+              ✕
+            </button>
           </div>
-        )}
+          {panelContent}
+        </div>
       </div>
     </>
   );
