@@ -28,7 +28,7 @@ export function AccidentOverlay({ report, onClose }: AccidentOverlayProps) {
   }, [mediaUrl, hasVideo]);
 
   return (
-    <div className="absolute bottom-20 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-[26rem] z-[1000] animate-slide-up">
+    <div className="absolute top-16 lg:top-auto lg:bottom-4 left-4 right-4 lg:left-auto lg:right-[26rem] z-[1000] animate-fade-in lg:animate-slide-up">
       <div className="glass-strong max-w-xl mx-auto overflow-hidden">
         {/* VERIFIED LIVE Badge */}
         <div className="flex items-center justify-between px-4 py-2 bg-danger/10 border-b border-danger/20">

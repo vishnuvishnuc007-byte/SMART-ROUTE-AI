@@ -78,75 +78,10 @@ export default function LeafletMap({
 
   // Helper to build dark glassmorphic card content inside the marker directly
   const getCardMarkerHTML = (acc: any) => {
-    const videoHtml = acc.verification_video_url 
-      ? `<div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-950 mt-1">
-           <video src="${acc.verification_video_url}" muted loop playsinline class="w-full h-full object-cover"></video>
-           <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-           <div class="absolute bottom-2 left-2">
-             <span class="px-1.5 py-0.5 rounded bg-red-500/25 border border-red-500/35 text-[8px] font-bold text-red-400">⚡ LIVE</span>
-           </div>
-         </div>`
-      : acc.image_url
-        ? `<div class="relative w-full h-32 rounded-xl overflow-hidden bg-slate-950 mt-1">
-             <img src="${acc.image_url}" class="w-full h-full object-cover">
-             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-           </div>`
-        : `<div class="h-20 flex items-center justify-center bg-red-500/5 border border-red-500/10 rounded-xl mt-1 text-center">
-             <div>
-               <span class="text-xl">⚠️</span>
-               <p class="text-[9px] text-white/40 mt-0.5 font-semibold">Accident Ahead</p>
-             </div>
-           </div>`;
-
-    const qrHtml = acc.hospital_qr_data
-      ? `<div class="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-white/5">
-           <div class="bg-white p-1 rounded-lg">
-             <img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data=${encodeURIComponent(acc.hospital_qr_data)}" width="40" height="40" alt="Hospital QR">
-           </div>
-           <div class="text-left">
-             <p class="text-[9px] font-bold text-white leading-tight">Hospital Support</p>
-             <p class="text-[7px] text-white/40">Scan to contribute to treatment</p>
-           </div>
-         </div>`
-      : '';
-
     return `
       <div class="relative flex items-center justify-center">
         <!-- pulsing red dot pin -->
         <div class="card-marker-dot"></div>
-        
-        <!-- absolute card float above -->
-        <div class="absolute bottom-3 flex flex-col items-center">
-          <!-- The Card Box -->
-          <div class="glass-strong w-60 p-3 rounded-2xl border border-white/10 shadow-2xl space-y-1.5 text-center pointer-events-auto">
-            <div class="flex items-center justify-between">
-              <span class="text-[8px] font-extrabold text-red-400 uppercase bg-red-500/10 border border-red-500/20 px-1 py-0.5 rounded">ACCIDENT</span>
-              <span class="text-[8px] text-white/30 font-mono">📍 ${acc.latitude ? acc.latitude.toFixed(3) : ''}, ${acc.longitude ? acc.longitude.toFixed(3) : ''}</span>
-            </div>
-            
-            <div class="text-left">
-              <p class="text-[10px] font-semibold text-white/90 leading-snug line-clamp-2">${acc.description || 'Road accident reported'}</p>
-            </div>
-
-            ${videoHtml}
-
-            <div class="grid grid-cols-2 gap-1.5 pt-1">
-              <div class="rounded-lg bg-amber-500/10 border border-amber-500/20 px-1 py-0.5 text-center">
-                <span class="text-xs">🐌</span>
-                <p class="text-[6px] font-bold uppercase text-amber-400">Drive Slow</p>
-              </div>
-              <div class="rounded-lg bg-blue-500/10 border border-blue-500/20 px-1 py-0.5 text-center">
-                <span class="text-xs">🚑</span>
-                <p class="text-[6px] font-bold uppercase text-blue-400 mt-0.5">Ambulance</p>
-              </div>
-            </div>
-
-            ${qrHtml}
-          </div>
-          
-          <!-- Down Arrow -->
-          <div class="card-marker-arrow"></div>
-        </div>
       </div>
     `;
   };
