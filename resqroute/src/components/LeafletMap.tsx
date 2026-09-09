@@ -98,9 +98,10 @@ export default function LeafletMap({
 
     mapRef.current = map;
 
-    // Add Dark Mode CartoDB tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
+    // Add Dark Mode Esri World Dark Gray Canvas tiles (Free, no API key required)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
     }).addTo(map);
 
     // Map Click Listener - only active in pick mode
