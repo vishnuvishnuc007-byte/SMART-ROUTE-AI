@@ -98,10 +98,11 @@ export default function LeafletMap({
 
     mapRef.current = map;
 
-    // Add Dark Mode Esri World Dark Gray Canvas tiles (Free, no API key required)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    // Add Dark Mode tile layer with rich city, town, locality, and road label visibility
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      className: 'dark-map-tiles',
     }).addTo(map);
 
     // Map Click Listener - only active in pick mode
@@ -423,6 +424,11 @@ export default function LeafletMap({
     <div className="relative w-full h-full">
       {/* Styles for pulsing custom markers and custom popup cards */}
       <style jsx global>{`
+        /* High-contrast dark theme for map tiles preserving all city/town/locality/road labels */
+        .dark-map-tiles {
+          filter: invert(100%) hue-rotate(180deg) brightness(80%) contrast(120%) saturate(60%);
+        }
+
         .custom-pulse-marker {
           display: flex;
           align-items: center;
