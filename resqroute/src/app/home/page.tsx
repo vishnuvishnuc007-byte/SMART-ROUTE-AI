@@ -32,6 +32,7 @@ export default function HomePage() {
   const [verificationReportId, setVerificationReportId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ role: string; id: string } | null>(null);
   const [selectedAccident, setSelectedAccident] = useState<Report | null>(null);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
   const [activeRoute, setActiveRoute] = useState<Array<{ lat: number; lng: number }> | null>(null);
   const [incomingCallReport, setIncomingCallReport] = useState<Report | null>(null);
 
@@ -57,20 +58,28 @@ export default function HomePage() {
   useEffect(() => {
     const supabase = createClient();
     const getProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      if (data) {
-        // Check if Google OAuth signup had a role selection stored in localStorage
-        const pendingRole = localStorage.getItem('signup_role');
-        if (pendingRole && (pendingRole === 'user' || pendingRole === 'help_team') && data.role === 'user' && pendingRole !== 'user') {
-          await supabase.from('profiles').update({ role: pendingRole }).eq('id', user.id);
-          localStorage.removeItem('signup_role');
-          setUserProfile({ role: pendingRole, id: user.id });
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        if (!user) { router.push('/login'); return; }
+        const { data: profileData } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (profileData) {
+          // Check if Google OAuth signup had a role selection stored in localStorage
+          const pendingRole = localStorage.getItem('signup_role');
+          if (pendingRole && (pendingRole === 'user' || pendingRole === 'help_team') && profileData.role === 'user' && pendingRole !== 'user') {
+            await supabase.from('profiles').update({ role: pendingRole }).eq('id', user.id);
+            localStorage.removeItem('signup_role');
+            setUserProfile({ role: pendingRole, id: user.id });
+          } else {
+            localStorage.removeItem('signup_role');
+            setUserProfile({ role: profileData.role, id: user.id });
+          }
         } else {
-          localStorage.removeItem('signup_role');
-          setUserProfile({ role: data.role, id: user.id });
+          setUserProfile({ role: 'user', id: user.id });
         }
+      } catch (err) {
+        console.error('getProfile error:', err);
+        router.push('/login');
       }
     };
     getProfile();
@@ -111,6 +120,19 @@ export default function HomePage() {
 
   const verifiedDisasters = reports.filter(r => r.type === 'disaster' && (r.status === 'verified' || r.danger_zone));
   const verifiedAccidents = reports.filter(r => r.type === 'accident' && (r.status === 'verified' || r.status === 'dispatched'));
+
+  useEffect(() => {
+    if (verifiedAccidents.length > 0 && !hasAutoSelected) {
+      const sorted = [...verifiedAccidents].sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      setSelectedAccident(sorted[0]);
+      setHasAutoSelected(true);
+    }
+  }, [verifiedAccidents, hasAutoSelected]);
+
   const activeAmbulanceReport = reports.find(r => r.status === 'dispatched' && r.type === 'accident');
   const ambulanceTracking = useAmbulanceTracking(activeAmbulanceReport?.id);
 
