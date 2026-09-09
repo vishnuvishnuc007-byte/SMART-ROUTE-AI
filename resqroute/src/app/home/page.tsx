@@ -48,6 +48,7 @@ export default function HomePage() {
   const [routeInfoOverride, setRouteInfoOverride] = useState<{ distance: string; duration: string } | null>(null);
   const [customReportCoords, setCustomReportCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [pickToMode, setPickToMode] = useState(false);
+  const [flyToLocation, setFlyToLocation] = useState<{ lat: number; lng: number; zoom?: number; timestamp: number } | null>(null);
 
 
 
@@ -337,6 +338,7 @@ export default function HomePage() {
           fromCoords={fromCoords}
           toCoords={toCoords}
           alternativeRoute={alternativeRoute}
+          flyToLocation={flyToLocation}
         />
       </div>
 
@@ -377,6 +379,7 @@ export default function HomePage() {
         routeInfoOverrideProp={routeInfoOverride}
         pickToMode={pickToMode}
         onTogglePickTo={() => setPickToMode(prev => !prev)}
+        onLocateUser={(lat, lng) => setFlyToLocation({ lat, lng, zoom: 15, timestamp: Date.now() })}
       />
 
       {/* Pick To Mode Banner */}

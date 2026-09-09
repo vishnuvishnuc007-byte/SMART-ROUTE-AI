@@ -25,6 +25,7 @@ interface ControlPanelProps {
   routeInfoOverrideProp?: { distance: string; duration: string } | null;
   pickToMode?: boolean;
   onTogglePickTo?: () => void;
+  onLocateUser?: (lat: number, lng: number) => void;
 }
 
 export function ControlPanel({
@@ -50,7 +51,8 @@ export function ControlPanel({
   onPreferSafeRoute,
   routeInfoOverrideProp = null,
   pickToMode = false,
-  onTogglePickTo
+  onTogglePickTo,
+  onLocateUser
 }: ControlPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [origin, setOrigin] = useState(originProp);
@@ -295,27 +297,33 @@ export function ControlPanel({
   };
 
   const fillGPS = () => {
-    // First try using already-available location from useGeolocation hook
-    if (userLat && userLng) {
-      setGpsLoading(true);
-      reverseGeocode(userLat, userLng);
-      setGpsLoading(false);
-      return;
-    }
-    // Fallback: request fresh location from device
     if (!navigator.geolocation) {
       setRouteError('Geolocation is not supported by your browser.');
       return;
     }
+
     setGpsLoading(true);
+    setRouteError(null);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        reverseGeocode(lat, lng);
+        if (onLocateUser) {
+          onLocateUser(lat, lng);
+        }
         setGpsLoading(false);
       },
-      () => {
-        setRouteError('Location access denied. Please allow location permission.');
+      (error) => {
         setGpsLoading(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setRouteError('Location permission is required to find your current location.');
+        } else if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
+          setRouteError('Unable to get your current location. Please check your device location settings.');
+        } else {
+          setRouteError('Unable to get your current location.');
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );

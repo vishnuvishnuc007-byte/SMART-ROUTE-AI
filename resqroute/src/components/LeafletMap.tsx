@@ -27,6 +27,7 @@ interface LeafletMapProps {
   fromCoords?: { lat: number; lng: number } | null;
   toCoords?: { lat: number; lng: number } | null;
   alternativeRoute?: Array<{ lat: number; lng: number }> | null;
+  flyToLocation?: { lat: number; lng: number; zoom?: number; timestamp: number } | null;
 }
 
 export default function LeafletMap({
@@ -42,7 +43,8 @@ export default function LeafletMap({
   onMapClick,
   fromCoords,
   toCoords,
-  alternativeRoute
+  alternativeRoute,
+  flyToLocation
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -121,6 +123,15 @@ export default function LeafletMap({
       }
     };
   }, []);
+
+  // 2. Fly to user location ONLY when Current Location button is explicitly clicked
+  useEffect(() => {
+    if (mapRef.current && flyToLocation) {
+      mapRef.current.flyTo([flyToLocation.lat, flyToLocation.lng], flyToLocation.zoom || 15, {
+        duration: 1.5
+      });
+    }
+  }, [flyToLocation]);
 
 
 
