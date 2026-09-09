@@ -11,6 +11,7 @@ import { ReportModal } from '@/components/ReportModal';
 import { AccidentOverlay } from '@/components/AccidentOverlay';
 import { AmbulanceTracker } from '@/components/AmbulanceTracker';
 import { VerificationCamera } from '@/components/VerificationCamera';
+import { ProfileDrawer } from '@/components/ProfileDrawer';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -30,7 +31,7 @@ export default function HomePage() {
   const [reportType, setReportType] = useState<'disaster' | 'accident' | null>(null);
   const [showVerification, setShowVerification] = useState(false);
   const [verificationReportId, setVerificationReportId] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<{ role: string; id: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ role: string; id: string; email?: string } | null>(null);
   const [selectedAccident, setSelectedAccident] = useState<Report | null>(null);
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
   const [activeRoute, setActiveRoute] = useState<Array<{ lat: number; lng: number }> | null>(null);
@@ -70,13 +71,13 @@ export default function HomePage() {
           if (pendingRole && (pendingRole === 'user' || pendingRole === 'help_team') && profileData.role === 'user' && pendingRole !== 'user') {
             await supabase.from('profiles').update({ role: pendingRole }).eq('id', user.id);
             localStorage.removeItem('signup_role');
-            setUserProfile({ role: pendingRole, id: user.id });
+            setUserProfile({ role: pendingRole, id: user.id, email: user.email || undefined });
           } else {
             localStorage.removeItem('signup_role');
-            setUserProfile({ role: profileData.role, id: user.id });
+            setUserProfile({ role: profileData.role, id: user.id, email: user.email || undefined });
           }
         } else {
-          setUserProfile({ role: 'user', id: user.id });
+          setUserProfile({ role: 'user', id: user.id, email: user.email || undefined });
         }
       } catch (err) {
         console.error('getProfile error:', err);
@@ -299,6 +300,14 @@ export default function HomePage() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
+      {/* Top Left Profile Circle Button & Slide-Out Drawer */}
+      <ProfileDrawer
+        userEmail={userProfile?.email}
+        userRole={userProfile?.role || 'user'}
+        onSignOut={handleSignOut}
+        onNavigate={(path) => router.push(path)}
+      />
+
       {/* Full Screen Map */}
       <div className="absolute inset-0">
         <LeafletMap
