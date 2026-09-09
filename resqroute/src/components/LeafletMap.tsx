@@ -122,12 +122,7 @@ export default function LeafletMap({
     };
   }, []);
 
-  // 2. Handle map view changes (center/zoom)
-  useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.setView([center.lat, center.lng], mapRef.current.getZoom());
-    }
-  }, [center]);
+
 
   // 3. User Location Marker
   useEffect(() => {
@@ -323,10 +318,6 @@ export default function LeafletMap({
         }).addTo(map);
         activeRoutePolylinesRef.current.push(polyline);
       }
-
-      const allPoints = activeRoute.map(p => [p.lat, p.lng] as L.LatLngExpression);
-      const bounds = L.latLngBounds(allPoints);
-      map.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [activeRoute, dangerZones]);
 
