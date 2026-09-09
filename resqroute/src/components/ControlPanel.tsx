@@ -296,37 +296,69 @@ export function ControlPanel({
     if (onClearRoute) onClearRoute();
   };
 
-  const fillGPS = () => {
-    if (!navigator.geolocation) {
-      setRouteError('Geolocation is not supported by your browser.');
-      return;
-    }
-
+  const fillGPS = async () => {
     setGpsLoading(true);
     setRouteError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        reverseGeocode(lat, lng);
-        if (onLocateUser) {
-          onLocateUser(lat, lng);
-        }
-        setGpsLoading(false);
-      },
-      (error) => {
-        setGpsLoading(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setRouteError('Location permission is required to find your current location.');
-        } else if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
+    const applyCoords = (lat: number, lng: number) => {
+      reverseGeocode(lat, lng);
+      if (onLocateUser) {
+        onLocateUser(lat, lng);
+      }
+      setGpsLoading(false);
+    };
+
+    // 1. First try using already-resolved coordinates from useGeolocation hook if present
+    if (userLat && userLng) {
+      applyCoords(userLat, userLng);
+      return;
+    }
+
+    // 2. Try browser native geolocation (enableHighAccuracy: false allows Wi-Fi/IP location on PCs & laptops without hardware GPS)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyCoords(pos.coords.latitude, pos.coords.longitude);
+        },
+        async (error) => {
+          if (error.code === error.PERMISSION_DENIED) {
+            setGpsLoading(false);
+            setRouteError('Location permission is required to find your current location.');
+            return;
+          }
+          // Try IP-based location fallback if Windows/Chrome GPS lookup times out
+          try {
+            const res = await fetch('https://ipapi.co/json/');
+            const data = await res.json();
+            if (data && data.latitude && data.longitude) {
+              applyCoords(data.latitude, data.longitude);
+              return;
+            }
+          } catch {
+            // Ignore IP fallback error
+          }
+          setGpsLoading(false);
           setRouteError('Unable to get your current location. Please check your device location settings.');
-        } else {
-          setRouteError('Unable to get your current location.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+        },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+      );
+      return;
+    }
+
+    // 3. Fallback to IP geolocation if browser lacks navigator.geolocation
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data && data.latitude && data.longitude) {
+        applyCoords(data.latitude, data.longitude);
+        return;
+      }
+    } catch {
+      // Ignore
+    }
+
+    setGpsLoading(false);
+    setRouteError('Geolocation is not supported by your browser.');
   };
 
   const selectOrigin = (s: any) => {

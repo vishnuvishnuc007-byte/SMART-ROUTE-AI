@@ -18,7 +18,7 @@ export function useGeolocation() {
     const watcher = navigator.geolocation.watchPosition(
       (pos) => setState({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, error: null, loading: false }),
       (err) => setState(p => ({ ...p, error: err.message, loading: false })),
-      { enableHighAccuracy: true, maximumAge: 10000 }
+      { enableHighAccuracy: false, maximumAge: 60000 }
     );
 
     return () => navigator.geolocation.clearWatch(watcher);
